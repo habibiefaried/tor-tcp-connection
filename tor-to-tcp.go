@@ -8,14 +8,13 @@ import (
 	"net"
 	"time"
 
-	"github.com/cretz/bine/process/embedded"
 	"github.com/cretz/bine/tor"
 )
 
 func main() {
 	port := 5353
 	fmt.Println("Starting and registering onion service, please wait a couple of minutes...")
-	t, err := tor.Start(nil, &tor.StartConf{ProcessCreator: embedded.NewCreator(), DataDir: "./data-dir-tor-to-tcp", EnableNetwork: true})
+	t, err := tor.Start(nil, &tor.StartConf{DataDir: "data-dir-tor-to-tcp", EnableNetwork: true})
 	if err != nil {
 		log.Panicf("Unable to start Tor: %v", err)
 	}
@@ -35,8 +34,6 @@ func main() {
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
 			continue
-		} else {
-			fmt.Printf("Accepted from %v\n", conn.RemoteAddr())
 		}
 		go func() {
 			conn2, err := net.Dial("tcp", "localhost:8080")

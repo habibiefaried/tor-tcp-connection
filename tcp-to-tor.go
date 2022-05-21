@@ -8,13 +8,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/cretz/bine/process/embedded"
 	"github.com/cretz/bine/tor"
 )
 
 func main() {
 	fmt.Println("Starting and registering onion service, please wait a couple of minutes...")
-	t, err := tor.Start(nil, &tor.StartConf{ProcessCreator: embedded.NewCreator(), DataDir: "./data-dir-tcp-to-tor", EnableNetwork: true})
+	t, err := tor.Start(nil, &tor.StartConf{DataDir: "data-dir-tcp-to-tor", EnableNetwork: true})
 	if err != nil {
 		log.Panicf("Unable to start Tor: %v", err)
 	}
@@ -44,7 +43,7 @@ func main() {
 
 		go func() {
 			fmt.Println("Connecting...")
-			conn2, err := dialer.Dial("tcp", "ts5gzjclebmkyopbot4dpaaz6koyywy5fkk62t66ctajveukwf7t34yd.onion:5353")
+			conn2, err := dialer.Dial("tcp", "i4owyifwx2xctzfblsri45ox5uvkcawt3owvbx5wk4hczcyemae6yhad.onion:5353")
 			if err != nil {
 				log.Println("error dialing remote addr", err)
 				return
