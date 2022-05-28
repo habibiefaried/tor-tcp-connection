@@ -8,13 +8,14 @@ import (
 	"net"
 	"time"
 
+	"github.com/cretz/bine/process/embedded"
 	"github.com/cretz/bine/tor"
 )
 
 func main() {
 	onionDNSaddress := "pdnshs76a5djmxzb4c5chvzc5kpv6egk3htorh7u4okvcpdcdj5r5bqd.onion:53"
 	fmt.Println("Starting and registering onion service, please wait a couple of minutes...")
-	t, err := tor.Start(nil, &tor.StartConf{DataDir: "data-dir-tcp-to-tor", EnableNetwork: true, DebugWriter: nil})
+	t, err := tor.Start(nil, &tor.StartConf{ProcessCreator: embedded.NewCreator(), DataDir: "data-dir-tcp-to-tor", EnableNetwork: true, DebugWriter: nil})
 	if err != nil {
 		log.Panicf("Unable to start Tor: %v", err)
 	}
