@@ -1,23 +1,51 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
+	"runtime"
+	"strings"
 	"time"
 
-	"github.com/cretz/bine/process/embedded"
 	"github.com/cretz/bine/tor"
 )
+
+func gracefulExit(err error) {
+	fmt.Println("Error has occured...")
+	fmt.Println(err)
+	fmt.Print("press Enter to exit")
+	var b byte
+	_, _ = fmt.Scanf("%v", &b)
+}
 
 func main() {
 	onionDNSaddress := "pdnshs76a5djmxzb4c5chvzc5kpv6egk3htorh7u4okvcpdcdj5r5bqd.onion:53"
 	fmt.Println("Starting and registering onion service, please wait a couple of minutes...")
-	t, err := tor.Start(nil, &tor.StartConf{ProcessCreator: embedded.NewCreator(), DataDir: "data-dir-tcp-to-tor", EnableNetwork: true, DebugWriter: nil})
-	if err != nil {
-		log.Panicf("Unable to start Tor: %v", err)
+	var t *tor.Tor
+	var err error
+	if runtime.GOOS == "windows" {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Full path of Tor Browser Installation: ")
+		text, _ := reader.ReadString('\n')
+		if err != nil {
+			gracefulExit(err)
+		}
+		torPath := fmt.Sprintf("%v\\Browser\\TorBrowser\\Tor\\tor.exe", strings.TrimSpace(text))
+		fmt.Println("Opening tor.exe at " + torPath)
+		t, err = tor.Start(nil, &tor.StartConf{ExePath: torPath, DataDir: "data-dir-tcp-to-tor", EnableNetwork: true, DebugWriter: nil})
+		if err != nil {
+			gracefulExit(err)
+		}
+	} else {
+		t, err = tor.Start(nil, &tor.StartConf{DataDir: "data-dir-tcp-to-tor", EnableNetwork: true, DebugWriter: nil})
+		if err != nil {
+			gracefulExit(err)
+		}
 	}
 
 	defer t.Close()
@@ -27,12 +55,13 @@ func main() {
 
 	dialer, err := t.Dialer(dialCtx, nil)
 	if err != nil {
-		log.Panicf("error dialing remote addr", err)
+		gracefulExit(err)
 	}
 
-	listener, err := net.Listen("tcp", ":12345")
+	listener, err := net.Listen("tcp", "127.0.0.1:53")
 	if err != nil {
-		panic(err)
+		fmt.Println("Please free-up your port 53 before using this")
+		gracefulExit(err)
 	}
 
 	// For testing the DNS resolve via TOR network
@@ -40,7 +69,6 @@ func main() {
 	r := &net.Resolver{
 		PreferGo: true,
 		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-
 			return dialer.Dial("tcp", onionDNSaddress)
 		},
 	}
